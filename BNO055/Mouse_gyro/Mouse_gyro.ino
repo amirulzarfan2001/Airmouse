@@ -19,7 +19,7 @@
 */
 
 /* Set the delay between fresh samples */
-#define BNO055_SAMPLERATE_DELAY_MS (30)
+#define BNO055_SAMPLERATE_DELAY_MS (100)
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
 //                                   id, address
@@ -30,12 +30,6 @@ Adafruit_BNO055 bno = Adafruit_BNO055(-1, 0x28, &Wire);
     Arduino setup function (automatically called at startup)
 */
 /**************************************************************************/
-
-float velocityX = 0, velocityY = 0; // Initial velocities
-unsigned long prevTime = 0;         // To calculate time intervals
-const float friction = 0.7;        // Friction factor to reduce drift
-const float noiseThreshold = 0.1;  // Threshold to ignore noise
-
 void setup(void)
 {
   Serial.begin(115200);
@@ -64,7 +58,6 @@ void setup(void)
   bno.setExtCrystalUse(true);
 
   Serial.println("Calibration status values: 0=uncalibrated, 3=fully calibrated");
-  prevTime = millis();
 }
 
 /**************************************************************************/
@@ -73,14 +66,11 @@ void setup(void)
     should go here)
 */
 /**************************************************************************/
-
-float acc_x;
-float acc_y;
-float acc_z;
-float sensitivity=10;
-
-
-
+float gyrox;
+float gyroy;
+float gyroz;
+float mouse_input_sensitivity=0.2;
+const float noiseThreshold = 0.1;  // Threshold to ignore noise
 void loop(void)
 {
   // Possible vector values can be:
@@ -90,14 +80,12 @@ void loop(void)
   // - VECTOR_EULER         - degrees
   // - VECTOR_LINEARACCEL   - m/s^2
   // - VECTOR_GRAVITY       - m/s^2
-  //imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  imu::Vector<3> lin_acc = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
+ // Get linear acceleration
 
-  // Get calibration status
-  uint8_t system, gyro, accel, mag;
+   uint8_t system, gyro, accel, mag;
   bno.getCalibration(&system, &gyro, &accel, &mag);
   // Ensure system calibration is adequate
-  if (accel < 3) {
+  if (gyro < 3) {
 bno.getCalibration(&system, &gyro, &accel, &mag);
  Serial.print("CALIBRATION: Sys=");
 Serial.print(system, DEC);
@@ -110,56 +98,23 @@ Serial.print(" Mag=");
  
     return;
   }
-  // Get time interval
-  unsigned long currentTime = millis();
-  float deltaTime = (currentTime - prevTime) / 1000.0; // Convert ms to seconds
-  prevTime = currentTime;
-
-  // Update velocity with friction applied
-  velocityX = (velocityX + lin_acc.x() * deltaTime*100) * friction;
-  velocityY = (velocityY + lin_acc.y() * deltaTime*100) * friction;
-
-  // // Apply noise threshold
- if (abs(velocityX) < noiseThreshold) velocityX = 0;
- if (abs(velocityY) < noiseThreshold) velocityY = 0;
-
-  // Clamp velocity to prevent excessive cursor speed
-  //float clampedVelX = constrain(velocityX, -10, 10);
-  //float clampedVelY = constrain(velocityY, -10, 10);
-
-  // Move the mouse cursor
-  const float sensitivity = 1;
-  Mouse.move(-velocityX*sensitivity, velocityY*sensitivity);
+  //imu::Vector<3> lin_acc = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
+  imu::Vector<3> gyro_r = bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
+  gyrox=gyro_r.x();
+  gyroy=gyro_r.y();
+  gyroz=gyro_r.z();
 
 
-  // Debugging: Print calibration and velocity data
-  Serial.print("Calibration acc=");
-  Serial.print(accel);
-  Serial.print(" VelX=");
-  Serial.print(velocityX*sensitivity);
-  Serial.print(" VelY=");
-  Serial.println(velocityY*sensitivity);
 
-  //delay(10); // Adjust for smoother response
-
+  Mouse.move(-gyroz*mouse_input_sensitivity, gyroy*mouse_input_sensitivity);
   /* Display the floating point data */
-  // Serial.print("X: ");
-  // Serial.print(lin_acc.x());
-  // Serial.print(" Y: ");
-  // Serial.print(lin_acc.y());
-  // Serial.print(" Z: ");
-  // Serial.print(lin_acc.z());
-  // Serial.print("\t\t");
-// acc_x=lin_acc.x();
-// acc_y=lin_acc.y();
-// acc_z=lin_acc.z();
-// Serial.print(lin_acc.x());
-// Serial.print("\t");
-// Serial.print(lin_acc.y());
-// Serial.print("\t");
-// Serial.println(lin_acc.z());
-
-
+ Serial.print("X: ");
+Serial.print(gyrox);
+ Serial.print(" Y: ");
+ Serial.print(gyroy);
+ Serial.print(" Z: ");
+ Serial.print(gyroz);
+ Serial.println("\t\t");
 
   /*
   // Quaternion data
@@ -176,19 +131,16 @@ Serial.print(" Mag=");
   */
 
   /* Display calibration status for each sensor. */
-  
-  // uint8_t system, gyro, accel, mag = 0;
-  // bno.getCalibration(&system, &gyro, &accel, &mag);
-  // Serial.print("CALIBRATION: Sys=");
-  // Serial.print(system, DEC);
-  // Serial.print(" Gyro=");
-  // Serial.print(gyro, DEC);
-  // Serial.print(" Accel=");
-  // Serial.print(accel, DEC);
-  // Serial.print(" Mag=");
-  // Serial.println(mag, DEC);
- 
+ // uint8_t system, gyro, accel, mag = 0;
+  bno.getCalibration(&system, &gyro, &accel, &mag);
+  Serial.print("CALIBRATION: Sys=");
+  Serial.print(system, DEC);
+  Serial.print(" Gyro=");
+  Serial.print(gyro, DEC);
+  Serial.print(" Accel=");
+  Serial.print(accel, DEC);
+  Serial.print(" Mag=");
+  Serial.println(mag, DEC);
 
-  // delay(BNO055_SAMPLERATE_DELAY_MS);
-  // Mouse.move(acc_x*sensitivity,acc_y*sensitivity,0);
+  //delay(30);
 }
