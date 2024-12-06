@@ -139,7 +139,7 @@ Serial.print(" Mag=");
   prevPositionY = positionY;
 
   // Move the mouse cursor relative to its current position
-  Mouse.move(deltaX, deltaY);
+  Mouse.move(-deltaX, deltaY);
 
   // Debugging: Print acceleration, velocity, and position
   Serial.print("Ax: ");
