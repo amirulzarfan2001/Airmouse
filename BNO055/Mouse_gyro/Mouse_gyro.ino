@@ -69,6 +69,8 @@ void setup(void)
 float gyrox;
 float gyroy;
 float gyroz;
+float x;
+float y;
 float mouse_input_sensitivity=0.8;
 const float noiseThreshold = 0.1;  // Threshold to ignore noise
 void loop(void)
@@ -100,18 +102,22 @@ Serial.print(" Mag=");
   }
   //imu::Vector<3> lin_acc = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
   imu::Vector<3> gyro_r = bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
-  gyrox=gyro_r.x();
+  gyrox=-gyro_r.x();
   gyroy=gyro_r.y();
   gyroz=gyro_r.z();
 
+  y=gyrox*cos(-PI/4)+gyroz*sin(-PI/4);
+  x=-gyrox*sin(-PI/4)+gyroz*cos(-PI/4);
 
 
-  Mouse.move(gyroz*mouse_input_sensitivity, -gyrox*mouse_input_sensitivity);
+
+  //Mouse.move(gyroz*mouse_input_sensitivity, gyrox*mouse_input_sensitivity);
+  Mouse.move(x*mouse_input_sensitivity, y*mouse_input_sensitivity);
   /* Display the floating point data */
  //Serial.print("X: ");
-Serial.print(gyrox);
+Serial.print(x);
  Serial.print(" ");
- Serial.print(gyroy);
+ Serial.print(y);
  Serial.print(" ");
  Serial.println(2);
  
