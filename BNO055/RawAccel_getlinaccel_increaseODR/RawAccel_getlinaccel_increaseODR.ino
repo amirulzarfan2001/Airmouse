@@ -2,7 +2,6 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
-#include <Mouse.h>
 
 /* This driver reads raw data from the BNO055
 
@@ -66,13 +65,27 @@ void setup(void)
     should go here)
 */
 /**************************************************************************/
-float lin_accx;
-float lin_accy;
-float lin_accz;
-float sensitivity=5;
-const float noiseThreshold = 0.1;  // Threshold to ignore noise
+
+// Define simulation parameters
+const float f_s = 1000.0; // Sampling frequency in Hz
+const float f_c = 10;   // Cutoff frequency in Hz
+
+// Calculate filter parameter alpha
+const float RC = 1.0 / (2 * 3.14159 * f_c);
+const float dt = 1.0 / f_s; // Sampling interval
+const float alpha = RC / (RC + dt);
+
+// Variables for filtering
+float x_prev = 0.0; // Previous input
+float y_prev = 0.0; // Previous output
+
+const unsigned long interval = 100; //f=100Hz // Time interval in milliseconds (e.g., 1000 ms = 1 second)
+unsigned long prevTime = 0;
+float deltaTime=0.1;
+
 void loop(void)
 {
+  unsigned long currentTime = millis();
   // Possible vector values can be:
   // - VECTOR_ACCELEROMETER - m/s^2
   // - VECTOR_MAGNETOMETER  - uT
@@ -80,43 +93,29 @@ void loop(void)
   // - VECTOR_EULER         - degrees
   // - VECTOR_LINEARACCEL   - m/s^2
   // - VECTOR_GRAVITY       - m/s^2
- // Get linear acceleration
+  imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
 
-   uint8_t system, gyro, accel, mag;
-  bno.getCalibration(&system, &gyro, &accel, &mag);
-  // Ensure system calibration is adequate
-  if (accel < 3) {
-bno.getCalibration(&system, &gyro, &accel, &mag);
- Serial.print("CALIBRATION: Sys=");
-Serial.print(system, DEC);
-Serial.print(" Gyro=");
-Serial.print(gyro, DEC);
-Serial.print(" Accel=");
-Serial.print(accel, DEC);
-Serial.print(" Mag=");
- Serial.println(mag, DEC);
- 
-    return;
-  }
-  imu::Vector<3> lin_acc = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
-  lin_accx=lin_acc.x();
-  lin_accy=lin_acc.y();
-  lin_accz=lin_acc.z();
 
-    // Apply noise threshold
-// if (abs(lin_accx) < noiseThreshold) lin_accx = 0;
-// if (abs(lin_accy) < noiseThreshold) lin_accy = 0;
-// if (abs(lin_accz) < noiseThreshold) lin_accz = 0;
+if( currentTime- prevTime>=interval){
 
-  //Mouse.move(-lin_accx*sensitivity, lin_accy*sensitivity);
+  prevTime = currentTime;
+
+float x=euler.x();
+ float t=x;
+    // Apply the high-pass filter
+  float y = alpha * (y_prev + t - x_prev);
+    // Update previous values
+  x_prev = t;
+  y_prev = y;
   /* Display the floating point data */
- //Serial.print("X: ");
-Serial.print(lin_accx);
- Serial.print(" ");
- Serial.print(lin_accy);
- Serial.print(" ");
- Serial.println(10);
- //Serial.print("\t\t");
+  Serial.print(" ");
+  Serial.print(y);
+  Serial.print(" ");
+  Serial.print(euler.x());
+  Serial.print(" ");
+  Serial.println(euler.z());
+  //Serial.print("\t\t");
+}
 
   /*
   // Quaternion data
@@ -133,7 +132,7 @@ Serial.print(lin_accx);
   */
 
   /* Display calibration status for each sensor. */
- // uint8_t system, gyro, accel, mag = 0;
+  // uint8_t system, gyro, accel, mag = 0;
   // bno.getCalibration(&system, &gyro, &accel, &mag);
   // Serial.print("CALIBRATION: Sys=");
   // Serial.print(system, DEC);
@@ -144,5 +143,5 @@ Serial.print(lin_accx);
   // Serial.print(" Mag=");
   // Serial.println(mag, DEC);
 
-  delay(30);
+  // delay(BNO055_SAMPLERATE_DELAY_MS);
 }

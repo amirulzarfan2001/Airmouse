@@ -69,7 +69,7 @@ void setup(void)
 float gyrox;
 float gyroy;
 float gyroz;
-float mouse_input_sensitivity=0.2;
+float mouse_input_sensitivity=0.8;
 const float noiseThreshold = 0.1;  // Threshold to ignore noise
 void loop(void)
 {
@@ -106,15 +106,15 @@ Serial.print(" Mag=");
 
 
 
-  Mouse.move(-gyroz*mouse_input_sensitivity, gyroy*mouse_input_sensitivity);
+  Mouse.move(gyroz*mouse_input_sensitivity, -gyrox*mouse_input_sensitivity);
   /* Display the floating point data */
- Serial.print("X: ");
+ //Serial.print("X: ");
 Serial.print(gyrox);
- Serial.print(" Y: ");
+ Serial.print(" ");
  Serial.print(gyroy);
- Serial.print(" Z: ");
- Serial.print(gyroz);
- Serial.println("\t\t");
+ Serial.print(" ");
+ Serial.println(2);
+ 
 
   /*
   // Quaternion data
@@ -132,15 +132,15 @@ Serial.print(gyrox);
 
   /* Display calibration status for each sensor. */
  // uint8_t system, gyro, accel, mag = 0;
-  bno.getCalibration(&system, &gyro, &accel, &mag);
-  Serial.print("CALIBRATION: Sys=");
-  Serial.print(system, DEC);
-  Serial.print(" Gyro=");
-  Serial.print(gyro, DEC);
-  Serial.print(" Accel=");
-  Serial.print(accel, DEC);
-  Serial.print(" Mag=");
-  Serial.println(mag, DEC);
+  // bno.getCalibration(&system, &gyro, &accel, &mag);
+  // Serial.print("CALIBRATION: Sys=");
+  // Serial.print(system, DEC);
+  // Serial.print(" Gyro=");
+  // Serial.print(gyro, DEC);
+  // Serial.print(" Accel=");
+  // Serial.print(accel, DEC);
+  // Serial.print(" Mag=");
+  // Serial.println(mag, DEC);
 
-  //delay(30);
+  delay(10);
 }

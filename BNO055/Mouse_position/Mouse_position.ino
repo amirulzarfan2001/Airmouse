@@ -31,13 +31,7 @@ Adafruit_BNO055 bno = Adafruit_BNO055(-1, 0x28, &Wire);
 */
 /**************************************************************************/
 
-float velocityX = 0, velocityY = 0;   // Velocities in X and Y directions
-float positionX = 0, positionY = 0;  // Current positions
-float prevPositionX = 0, prevPositionY = 0; // Previous positions
-unsigned long prevTime = 0;          // To calculate delta time
-const float noiseThreshold = 0.1;    // Threshold to filter small accelerations
-const float friction = 0.7;         // Friction factor to reduce drift
-const float sensitivity = 200;       // Cursor sensitivity scaling factor
+
 
 
 void setup(void)
@@ -72,7 +66,7 @@ void setup(void)
     // Start Mouse control
   Mouse.begin();
   
-  prevTime = millis();
+
 }
 
 /**************************************************************************/
@@ -81,6 +75,14 @@ void setup(void)
     should go here)
 */
 /**************************************************************************/
+  // Get time interval
+float deltaTime = 0.01; // Convert ms to seconds
+float velocityX = 0, velocityY = 0;   // Velocities in X and Y directions
+float positionX = 0, positionY = 0;  // Current positions
+float prevPositionX = 0, prevPositionY = 0; // Previous positions
+const float noiseThreshold = 0.15;    // Threshold to filter small accelerations
+float sensitivity=5;
+
 void loop(void)
 {
   // Possible vector values can be:
@@ -93,7 +95,7 @@ void loop(void)
   uint8_t system, gyro, accel, mag;
   bno.getCalibration(&system, &gyro, &accel, &mag);
   // Ensure system calibration is adequate
-  if (accel < 3) {
+  if (gyro < 3) {
 bno.getCalibration(&system, &gyro, &accel, &mag);
  Serial.print("CALIBRATION: Sys=");
 Serial.print(system, DEC);
@@ -109,10 +111,7 @@ Serial.print(" Mag=");
   // Get linear acceleration
   imu::Vector<3> lin_acc = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
 
-  // Get time interval
-  unsigned long currentTime = millis();
-  float deltaTime = (currentTime - prevTime) / 1000.0; // Convert ms to seconds
-  prevTime = currentTime;
+
 
   // Extract acceleration values
   float ax = lin_acc.x();
@@ -123,8 +122,8 @@ Serial.print(" Mag=");
   if (abs(ay) < noiseThreshold) ay = 0;
 
   // Update velocities
-  velocityX = (velocityX + ax * deltaTime*100) * friction;
-  velocityY = (velocityY + ay * deltaTime*100) * friction;
+  velocityX = (velocityX + ax * deltaTime*100) ;
+  velocityY = (velocityY + ay * deltaTime*100) ;
 
   // Update positions
   positionX += velocityX * deltaTime;
